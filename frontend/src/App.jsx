@@ -7,6 +7,7 @@ import Background from "./components/Background";
 import { AnimatePresence } from "framer-motion";
 
 import CreateQuiz from "./pages/createQuiz";
+import QuestionPage from "./pages/questionPage";
 // Test Pages(only imported in development);/
 import TestPage from "./pages/TestPage";
 import TestQuestionPage from "./pages/test/TestQuestion";
@@ -25,8 +26,10 @@ function App() {
           {/* Main App Routes */}
           <Route path="/" element={<HomePage />} />
           <Route path="/create-quiz" element={<CreateQuiz />} />
+          <Route path="/quiz/:code" element={<QuestionPage />} />
           <Route path="/lobby/:gamePin" element={<LobbyPage />} />
           <Route path="/game/:gamePin" element={<GamePage />} />
+
 
           {/* Development-only Test Routes */}
           {import.meta.env.DEV && (

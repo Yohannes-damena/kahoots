@@ -9,7 +9,7 @@ export default defineConfig({
     host: true, // Expose server to the network
     proxy: {
       '/socket.io': {
-        target: 'http://localhost:4000',
+        target: 'http://localhost:5000',
         ws: true,
       },
     },

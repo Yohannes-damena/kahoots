@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 const createPage = () => {
   const [name, setName] = useState("");
+  const [hostName, setHostName] = useState("");
   const navigate = useNavigate();
 
   const handleCreateGame = (e) => {
@@ -21,7 +22,7 @@ const createPage = () => {
         className="p-3 rounded-lg bg-white/10 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-brand-pink"
       />
       <button
-        type="submit"    
+        type="submit"
         onClick={() => navigate("/create-quiz")}
         className="p-3 bg-brand-pink text-white font-bold rounded-lg hover:bg-opacity-80 transition-colors"
       >
