@@ -1,4 +1,4 @@
-import { Server } from "engine.io";
+import { Server } from "socket.io";
 import express from "express";
 import http from "http";
 import cors from "cors";
@@ -7,15 +7,15 @@ import { socketHandlers } from "./sockets/socket.handle.js";
 import quizRoutes from "./routes/quiz.routes.js";
 import { mongoDB } from "./config/db.js";
 dotenv.config();
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 6000;
 
 //Mongo connection
-const router = express.Router();
 const app = express();
 
-app.use(express.json());
 app.use(cors());
-app.use("api/quiz", quizRoutes);
+app.use(express.json());
+
+app.use("/api/quiz", quizRoutes);
 
 // The socket connection
 const server = http.createServer(app);
