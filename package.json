@@ -2,23 +2,22 @@
   "name": "kahoot-like-webapp",
   "version": "1.0.0",
   "description": "",
+  "type": "module",
   "scripts": {
-    "start": "node backend/server.js",
-    "dev": "concurrently \"npm run server --prefix backend\" \"npm run dev --prefix frontend\"",
-    "server": "npm start --prefix backend",
-    "client": "npm run dev --prefix frontend"
+    "dev": "concurrently \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
+    "start": "node backend/server.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Yohannes-damena/kahoot-like-webapp.git"
+    "url": "git+https://github.com/Yohannes-damena/kahoots.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/Yohannes-damena/kahoot-like-webapp/issues"
+    "url": "https://github.com/Yohannes-damena/kahoots/issues"
   },
-  "homepage": "https://github.com/Yohannes-damena/kahoot-like-webapp#readme",
+  "homepage": "https://github.com/Yohannes-damena/kahoots#readme",
   "devDependencies": {
     "concurrently": "^9.2.1",
     "nodemon": "^3.1.10"
