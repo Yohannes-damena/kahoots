@@ -7,7 +7,7 @@ import { socketHandlers } from "./sockets/socket.handle.js";
 import quizRoutes from "./routes/quiz.routes.js";
 import { mongoDB } from "./config/db.js";
 dotenv.config();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT;
 
 //Mongo connection
 const router = express.Router();
