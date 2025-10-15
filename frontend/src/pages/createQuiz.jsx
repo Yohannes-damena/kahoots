@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import "react-toastify/dist/ReactToastify.css";
+import { toast, ToastContainer } from "react-toastify";
 
 const CreateQuiz = () => {
   const [hostName, setHostName] = useState("");
@@ -42,14 +44,15 @@ const CreateQuiz = () => {
 
   const validateForm = () => {
     if (!hostName.trim()) {
-      alert("Please enter the Host Name.");
+      toast.error("Please enter the host name");
       return false;
     }
     for (const q of questions) {
       if (!q.questionText.trim())
-        return alert("Fill out all question texts."), false;
+        return toast.error("Please fill out all question fields"), false;
       for (const opt of q.options)
-        if (!opt.trim()) return alert("Fill out all option fields."), false;
+        if (!opt.trim())
+          return toast.error("Please fill out all option fields"), false;
     }
     return true;
   };
@@ -75,19 +78,25 @@ const CreateQuiz = () => {
         "http://localhost:5000/api/quiz/create-quiz",
         payload
       );
+      //* Get Quiz code
 
-      alert(`Quiz created! Code: ${res.data.quiz.code}`);
+      const code = res.data.quiz.code;
+
+      toast.success(`Quiz created! Code: ${res.data.quiz.code}`);
+      // Brief interval for the user to view the sucess toast.
+      setTimeout(() => {
+        navigate(`/quiz/${quizCode}`);
+      }, 1500);
+
+      //* Clear the form
       localStorage.removeItem("hostName");
       setHostName("");
       setQuestions([
         { questionText: "", options: ["", "", "", ""], correctAnswerIndex: 0 },
       ]);
-
-      // ✅ Navigate only after success
-      navigate("/create");
     } catch (err) {
       console.error(err);
-      alert("Error creating quiz. Ensure backend is running.");
+      toast.error("Error creating quiz. Ensure backend is running.");
     } finally {
       setLoading(false);
     }
@@ -98,7 +107,6 @@ const CreateQuiz = () => {
       <h1 className="text-2xl font-bold text-center text-purple-600 mb-6">
         Create Quiz
       </h1>
-
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <input
           type="text"
@@ -167,6 +175,8 @@ const CreateQuiz = () => {
           {loading ? "Creating Quiz..." : "Create Quiz"}
         </button>
       </form>
+      //* Toaster container
+      <ToastContainer position="top-center" />
     </div>
   );
 };
