@@ -1,20 +1,23 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 const CreateQuiz = () => {
   const [hostName, setHostName] = useState("");
   const [questions, setQuestions] = useState([
-    // Initial state with one question
     { questionText: "", options: ["", "", "", ""], correctAnswerIndex: 0 },
   ]);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-  // --- Handlers to update the questions array ---
+  useEffect(() => {
+    const storedHostName = localStorage.getItem("hostName");
+    if (storedHostName) setHostName(storedHostName);
+  }, []);
 
   const handleAddQuestion = () => {
     setQuestions([
       ...questions,
-      // Add a new question object
       { questionText: "", options: ["", "", "", ""], correctAnswerIndex: 0 },
     ]);
   };
@@ -37,43 +40,27 @@ const CreateQuiz = () => {
     setQuestions(newQuestions);
   };
 
-  // --- Validation Function ---
-
   const validateForm = () => {
     if (!hostName.trim()) {
       alert("Please enter the Host Name.");
       return false;
     }
-
-    // Check every question for non-empty text and non-empty options
     for (const q of questions) {
-      if (!q.questionText.trim()) {
-        alert("Please fill out all question texts.");
-        return false;
-      }
-      for (const option of q.options) {
-        if (!option.trim()) {
-          alert("Please fill out all option fields.");
-          return false;
-        }
-      }
+      if (!q.questionText.trim())
+        return alert("Fill out all question texts."), false;
+      for (const opt of q.options)
+        if (!opt.trim()) return alert("Fill out all option fields."), false;
     }
     return true;
   };
 
-  // --- Submission Handler ---
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!validateForm()) {
-      return; // Stop submission if validation fails
-    }
+    if (!validateForm()) return;
 
     setLoading(true);
-
     try {
-      // Transform questions to match the expected backend schema
       const formattedQuestions = questions.map((q) => ({
         questionText: q.questionText,
         options: q.options.map((opt, index) => ({
@@ -90,42 +77,39 @@ const CreateQuiz = () => {
       );
 
       alert(`Quiz created! Code: ${res.data.quiz.code}`);
-      // Reset form on success
+      localStorage.removeItem("hostName");
       setHostName("");
       setQuestions([
         { questionText: "", options: ["", "", "", ""], correctAnswerIndex: 0 },
       ]);
+
+      // ✅ Navigate only after success
+      navigate("/create");
     } catch (err) {
       console.error(err);
-      alert(
-        "Error creating quiz. Check your console and ensure the backend is running."
-      );
+      alert("Error creating quiz. Ensure backend is running.");
     } finally {
       setLoading(false);
     }
   };
 
-  // --- Component Render ---
-
   return (
-    // Reverted to simple max-w-md container for centered look without changing background
     <div className="w-full max-w-md mx-auto mt-10 p-4">
       <h1 className="text-2xl font-bold text-center text-purple-600 mb-6">
         Create Quiz
       </h1>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        {/* Host Name Input */}
         <input
           type="text"
           placeholder="Host Name"
+          readOnly={Boolean(localStorage.getItem("hostName"))}
           value={hostName}
           onChange={(e) => setHostName(e.target.value)}
           className="p-2 border rounded"
           required
         />
 
-        {/* Map through Questions */}
         {questions.map((q, qIndex) => (
           <div
             key={qIndex}
@@ -134,7 +118,6 @@ const CreateQuiz = () => {
             <h2 className="text-lg font-semibold text-gray-700">
               Question {qIndex + 1}
             </h2>
-            {/* Question Text Input */}
             <input
               type="text"
               placeholder={`Question ${qIndex + 1} text`}
@@ -144,34 +127,30 @@ const CreateQuiz = () => {
               required
             />
 
-            {/* Options & Correct Answer Selection */}
-            <div className="flex flex-col gap-2">
-              {q.options.map((opt, oIndex) => (
-                <div key={oIndex} className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    name={`correct-${qIndex}`}
-                    checked={q.correctAnswerIndex === oIndex}
-                    onChange={() => handleCorrectAnswer(qIndex, oIndex)}
-                    className="form-radio text-purple-600 h-4 w-4"
-                  />
-                  <input
-                    type="text"
-                    placeholder={`Option ${oIndex + 1}`}
-                    value={opt}
-                    onChange={(e) =>
-                      handleOptionChange(qIndex, oIndex, e.target.value)
-                    }
-                    className="p-2 border rounded flex-1"
-                    required
-                  />
-                </div>
-              ))}
-            </div>
+            {q.options.map((opt, oIndex) => (
+              <div key={oIndex} className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name={`correct-${qIndex}`}
+                  checked={q.correctAnswerIndex === oIndex}
+                  onChange={() => handleCorrectAnswer(qIndex, oIndex)}
+                  className="form-radio text-purple-600 h-4 w-4"
+                />
+                <input
+                  type="text"
+                  placeholder={`Option ${oIndex + 1}`}
+                  value={opt}
+                  onChange={(e) =>
+                    handleOptionChange(qIndex, oIndex, e.target.value)
+                  }
+                  className="p-2 border rounded flex-1"
+                  required
+                />
+              </div>
+            ))}
           </div>
         ))}
 
-        {/* Add Question Button */}
         <button
           type="button"
           onClick={handleAddQuestion}
@@ -180,10 +159,8 @@ const CreateQuiz = () => {
           Add Another Question
         </button>
 
-        {/* Submit Button */}
         <button
           type="submit"
-          onClick={() => navigate("/create")}
           className="p-3 bg-purple-600 text-white font-extrabold rounded-lg hover:bg-purple-700 transition duration-150 disabled:bg-gray-400"
           disabled={loading}
         >
