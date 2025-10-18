@@ -1,12 +1,15 @@
 // backend/game/gameLogic.js
 export const games = {};
 
+const ANSWER_TIME_LIMIT_MS = 15000;
+
 export const sendQuestion = (io, pin) => {
   const game = games[pin];
   if (!game) return;
   game.currentQuestionIndex++;
   game.answers = [];
   game.gameState = "playing";
+  game.questionStartTime = Date.now();
 
   const question = game.questions[game.currentQuestionIndex];
 
@@ -15,13 +18,14 @@ export const sendQuestion = (io, pin) => {
     options: question.options,
     questionIndex: game.currentQuestionIndex,
     totalQuestions: game.questions.length,
+    timeLimitMs: ANSWER_TIME_LIMIT_MS,
   });
 
   setTimeout(() => {
     if (game.gameState === "playing") {
       showAnswerAndLeaderboard(io, pin);
     }
-  }, 15000);
+  }, ANSWER_TIME_LIMIT_MS);
 };
 
 export const showAnswerAndLeaderboard = (io, pin) => {
