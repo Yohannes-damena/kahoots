@@ -12,7 +12,7 @@ const QuizQuestions = () => {
       try {
         const res = await axios.get(`http://localhost:5000/api/quiz/${code}`);
         console.log("Response data:", res.data);
-        setQuiz(res.data.quiz || res.data); // handles both shapes safely
+        setQuiz(res.data.quiz || res.data);
       } catch (err) {
         console.error("Error fetching quiz:", err);
       } finally {
