@@ -21,6 +21,7 @@ const GamePage = () => {
     const [finalScores, setFinalScores] = useState([]);
     const [playerAnswer, setPlayerAnswer] = useState(null);
     const [isLastQuestion, setIsLastQuestion] = useState(false);
+    const [answerFeedback, setAnswerFeedback] = useState(null);
 
     const { isHost, playerId } = state || {};
 
@@ -31,34 +32,48 @@ const GamePage = () => {
         }
 
         const handleNewQuestion = (data) => {
+            console.log('Received new question:', data);
             setCurrentQuestion(data);
             setQuestionResult(null);
             setPlayerAnswer(null);
+            setAnswerFeedback(null);
             setGameState('question');
             setIsLastQuestion(data.questionIndex === data.totalQuestions - 1);
         };
 
+        const handleAnswerResult = (data) => {
+            console.log('Answer result:', data);
+            setAnswerFeedback(data);
+        };
+
         const handleShowAnswer = (data) => {
-            setQuestionResult(data);
-            setLeaderboard(data.scores);
-            setGameState('leaderboard');
+            console.log('Showing answer and leaderboard:', data);
+            // Only show answer if we were in question state
+            if (gameState === 'question') {
+                setQuestionResult(data);
+                setLeaderboard(data.scores);
+                setGameState('leaderboard');
+            }
         };
 
         const handleGameEnded = (data) => {
+            console.log('Game ended:', data);
             setFinalScores(data.finalScores);
             setGameState('end');
         };
 
         socket.on('game:new-question', handleNewQuestion);
+        socket.on('player:answer-result', handleAnswerResult);
         socket.on('game:show-answer', handleShowAnswer);
         socket.on('game:ended', handleGameEnded);
 
         return () => {
             socket.off('game:new-question', handleNewQuestion);
+            socket.off('player:answer-result', handleAnswerResult);
             socket.off('game:show-answer', handleShowAnswer);
             socket.off('game:ended', handleGameEnded);
         };
-    }, [socket, navigate, state]);
+    }, [socket, navigate, state, gameState]);
 
     const handleAnswerSubmit = (answerIndex) => {
         if (playerAnswer === null) {
@@ -81,8 +96,38 @@ const GamePage = () => {
                 return (
                     <div className="w-full">
                         <Question question={currentQuestion} />
-                        {!isHost && <AnswerOptions question={currentQuestion} onAnswer={handleAnswerSubmit} playerAnswer={playerAnswer} />}
-                        {isHost && <p className="text-center text-white/70 mt-4">Players are answering...</p>}
+                        {!isHost && (
+                            <>
+                                <AnswerOptions question={currentQuestion} onAnswer={handleAnswerSubmit} playerAnswer={playerAnswer} />
+                                {answerFeedback && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className={`mt-6 p-4 rounded-lg text-center text-white font-bold text-xl ${
+                                            answerFeedback.isCorrect ? 'bg-green-500/80' : 'bg-red-500/80'
+                                        }`}
+                                    >
+                                        {answerFeedback.isCorrect ? (
+                                            <>
+                                                <div>✅ Correct!</div>
+                                                <div className="text-2xl mt-2">+{answerFeedback.pointsEarned} points</div>
+                                                <div className="text-sm mt-1 opacity-80">
+                                                    Answered in {(answerFeedback.elapsedMs / 1000).toFixed(1)}s
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <div>❌ Incorrect</div>
+                                        )}
+                                    </motion.div>
+                                )}
+                            </>
+                        )}
+                        {isHost && (
+                            <div className="text-center text-white/70 mt-4">
+                                <p className="text-xl">⏳ Players are answering...</p>
+                                <p className="text-sm mt-2">Points are awarded for speed and accuracy!</p>
+                            </div>
+                        )}
                     </div>
                 );
             case 'leaderboard':

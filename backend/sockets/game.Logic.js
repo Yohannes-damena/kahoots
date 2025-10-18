@@ -36,8 +36,18 @@ export const showAnswerAndLeaderboard = (io, pin) => {
   const question = game.questions[game.currentQuestionIndex];
   const scores = [...game.players].sort((a, b) => b.score - a.score);
 
+  // Add information about points earned this round
+  const roundResults = game.answers.map(answer => ({
+    playerId: answer.playerId,
+    playerName: game.players.find(p => p.id === answer.playerId)?.name,
+    isCorrect: answer.isCorrect,
+    pointsEarned: answer.earned,
+    elapsedMs: answer.elapsedMs
+  }));
+
   io.to(pin).emit("game:show-answer", {
     correctAnswerIndex: question.correctAnswerIndex,
     scores,
+    roundResults,
   });
 };

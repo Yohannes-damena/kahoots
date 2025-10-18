@@ -90,6 +90,9 @@ export const socketHandlers = (io, socket) => {
     const player = game.players.find((p) => p.id === playerId);
     if (!player) return;
 
+    // Check if player already answered
+    if (game.answers.find(a => a.playerId === playerId)) return;
+
     const question = game.questions[game.currentQuestionIndex];
     const isCorrect = question.correctAnswerIndex === answerIndex;
 
@@ -101,6 +104,14 @@ export const socketHandlers = (io, socket) => {
 
     game.answers.push({ playerId, answerIndex, isCorrect, elapsedMs, earned });
     if (isCorrect) player.score += earned;
+
+    // Send immediate feedback to the player
+    socket.emit("player:answer-result", {
+      isCorrect,
+      pointsEarned: earned,
+      elapsedMs,
+      totalScore: player.score
+    });
 
     if (game.answers.length === game.players.length) {
       showAnswerAndLeaderboard(io, pin);
