@@ -17,7 +17,6 @@ const QuizSchema = new mongoose.Schema(
   { timestamps: true } // Automatically adds a createdAt & updatedAt
 );
 
-export const Quiz = mongoose.model("Quiz", QuizSchema);
 
 // Persisted game results
 const PlayerResultSchema = new mongoose.Schema({
@@ -36,4 +35,5 @@ const GameResultSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+export const Quiz = mongoose.model("Quiz", QuizSchema);
 export const GameResult = mongoose.model("GameResult", GameResultSchema);
