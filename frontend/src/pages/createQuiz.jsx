@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "react-toastify/dist/ReactToastify.css";
 import { toast, ToastContainer } from "react-toastify";
+import { useSocket } from "../context/SocketContext";
 
 const CreateQuiz = () => {
   const [hostName, setHostName] = useState("");
@@ -11,11 +12,25 @@ const CreateQuiz = () => {
   ]);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const socket = useSocket();
 
   useEffect(() => {
     const storedHostName = localStorage.getItem("hostName");
     if (storedHostName) setHostName(storedHostName);
-  }, []);
+
+    if (!socket.connected) {
+      socket.connect();
+    }
+
+    const handleGameCreated = ({ game }) => {
+      navigate(`/lobby/${game.pin}`, { state: { isHost: true, game } });
+    };
+
+    socket.on("host:game-created", handleGameCreated);
+    return () => {
+      socket.off("host:game-created", handleGameCreated);
+    };
+  }, [socket, navigate]);
 
   const handleAddQuestion = () => {
     setQuestions([
@@ -78,15 +93,19 @@ const CreateQuiz = () => {
         "http://localhost:5000/api/quiz/create-quiz",
         payload
       );
-      //* Get Quiz code
 
-      const code = res.data.quiz.code;
+      const quiz = res.data.quiz;
+      const code = quiz.code;
+      const quizId = quiz._id;
 
-      toast.success(`Quiz created! Code: ${res.data.quiz.code}`);
-      // Brief interval for the user to view the sucess toast.
-      setTimeout(() => {
-        navigate(`/quiz/${quizCode}`);
-      }, 1500);
+      toast.success(`Quiz created! Code: ${code}`);
+
+      // Save for later sessions
+      localStorage.setItem("quizCode", code);
+      localStorage.setItem("quizId", quizId);
+
+      // Immediately create a live game session for this quiz
+      socket.emit("host:create-game", { name: hostName, quizId });
 
       //* Clear the form
       localStorage.removeItem("hostName");

@@ -26,7 +26,7 @@ const LobbyPage = () => {
 
     const handleGameStarted = () => {
       navigate(`/game/${gamePin}`, {
-        state: { isHost, game, playerId: state.playerId },
+        state: { isHost, game, playerId: state?.playerId },
       });
     };
 

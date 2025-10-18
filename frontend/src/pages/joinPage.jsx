@@ -1,12 +1,18 @@
 import { useState } from "react";
+import { useSocket } from "../context/SocketContext";
+import { useNavigate } from "react-router-dom";
 
 const JoinPage = () => {
   const [gamePin, setGamePin] = useState("");
   const [name, setName] = useState("");
-  
+  const socket = useSocket();
+  const navigate = useNavigate();
+
   const handleJoinGame = (e) => {
     e.preventDefault();
-    // Add your join logic here
+    if (!name.trim() || !gamePin.trim()) return;
+    if (!socket.connected) socket.connect();
+    socket.emit("player:join-game", { name, pin: gamePin });
   };
 
   return (
