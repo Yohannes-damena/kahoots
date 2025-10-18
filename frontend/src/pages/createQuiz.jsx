@@ -39,6 +39,12 @@ const CreateQuiz = () => {
     ]);
   };
 
+  const handleDeleteQuestion = (qIndex) => {
+    if (questions.length === 1) return; // keep at least one question
+    const newQuestions = questions.filter((_, idx) => idx !== qIndex);
+    setQuestions(newQuestions);
+  };
+
   const handleQuestionChange = (index, value) => {
     const newQuestions = [...questions];
     newQuestions[index].questionText = value;
@@ -142,9 +148,19 @@ const CreateQuiz = () => {
             key={qIndex}
             className="border p-4 rounded flex flex-col gap-3 bg-white shadow-sm"
           >
-            <h2 className="text-lg font-semibold text-gray-700">
-              Question {qIndex + 1}
-            </h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-700">
+                Question {qIndex + 1}
+              </h2>
+              <button
+                type="button"
+                onClick={() => handleDeleteQuestion(qIndex)}
+                disabled={questions.length === 1}
+                className="text-red-600 text-sm px-2 py-1 rounded hover:bg-red-50 disabled:text-gray-400 disabled:cursor-not-allowed"
+              >
+                Delete
+              </button>
+            </div>
             <input
               type="text"
               placeholder={`Question ${qIndex + 1} text`}

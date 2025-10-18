@@ -31,6 +31,16 @@ const GamePage = () => {
             return;
         }
 
+        // Consume initial question if provided via navigation (fixes first-question skip)
+        if (state.initialQuestion) {
+            setCurrentQuestion(state.initialQuestion);
+            setQuestionResult(null);
+            setPlayerAnswer(null);
+            setAnswerFeedback(null);
+            setGameState('question');
+            setIsLastQuestion(state.initialQuestion.questionIndex === state.initialQuestion.totalQuestions - 1);
+        }
+
         const handleNewQuestion = (data) => {
             console.log('Received new question:', data);
             setCurrentQuestion(data);
