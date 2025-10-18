@@ -44,6 +44,21 @@ const HomePage = () => {
     };
   }, [socket, navigate]);
 
+  const handleCreateGame = async () => {
+    const storedHost = localStorage.getItem("hostName") || name;
+    if (!storedHost) return;
+    try {
+      // Fetch a quiz by code or create one first via Create flow.
+      // Here we assume the host already created a quiz and stored its code in localStorage.
+      const quizId = localStorage.getItem("quizId");
+      const hostName = storedHost;
+      if (!quizId) return;
+      socket.emit("host:create-game", { name: hostName, quizId });
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const handleJoinGame = (e) => {
     e.preventDefault();
     if (name.trim() && gamePin.trim()) {

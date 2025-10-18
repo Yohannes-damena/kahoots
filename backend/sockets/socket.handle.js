@@ -1,5 +1,5 @@
 import { games, sendQuestion, showAnswerAndLeaderboard } from "./game.Logic.js";
-import { Quiz } from "../models/game_models.js";
+import { Quiz, GameResult } from "../models/game_models.js";
 
 // Generate unique 6-digit PIN
 const generatePin = (games, length = 6) => {
@@ -45,6 +45,7 @@ export const socketHandlers = (io, socket) => {
         currentQuestionIndex: -1,
         gameState: "lobby",
         answers: [],
+        quizId: quiz._id,
       };
 
       socket.join(pin);
@@ -92,8 +93,14 @@ export const socketHandlers = (io, socket) => {
     const question = game.questions[game.currentQuestionIndex];
     const isCorrect = question.correctAnswerIndex === answerIndex;
 
-    game.answers.push({ playerId, answerIndex, isCorrect });
-    if (isCorrect) player.score += 100;
+    // Calculate time-based score: faster answers earn more within the time limit
+    const elapsedMs = Math.max(0, Date.now() - (game.questionStartTime || Date.now()));
+    const timeFactor = Math.max(0, 1 - elapsedMs / 15000); // 0..1
+    const basePoints = question.points ?? 100;
+    const earned = isCorrect ? Math.round(basePoints * (0.5 + 0.5 * timeFactor)) : 0; // 50%-100% of base
+
+    game.answers.push({ playerId, answerIndex, isCorrect, elapsedMs, earned });
+    if (isCorrect) player.score += earned;
 
     if (game.answers.length === game.players.length) {
       showAnswerAndLeaderboard(io, pin);
@@ -106,6 +113,17 @@ export const socketHandlers = (io, socket) => {
       if (game.currentQuestionIndex >= game.questions.length - 1) {
         game.gameState = "end";
         const finalScores = [...game.players].sort((a, b) => b.score - a.score);
+
+        // Persist results (best-effort, non-blocking)
+        const doc = new GameResult({
+          pin,
+          quizId: game.quizId,
+          hostName: game.players.find(p => p.isHost)?.name || "Host",
+          players: finalScores.map(({ name, score }) => ({ name, score })),
+          questionsCount: game.questions.length,
+        });
+        doc.save().catch(() => {});
+
         io.to(pin).emit("game:ended", { finalScores });
       } else {
         sendQuestion(io, pin);
