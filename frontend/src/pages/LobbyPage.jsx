@@ -13,6 +13,7 @@ const LobbyPage = () => {
   const { isHost, game: initialGame } = state || {};
   const [game, setGame] = useState(initialGame);
   const [copied, setCopied] = useState(false);
+  const [hasNavigated, setHasNavigated] = useState(false);
 
   useEffect(() => {
     if (!state) {
@@ -24,20 +25,22 @@ const LobbyPage = () => {
       setGame((prev) => ({ ...prev, players }));
     };
 
-    const handleGameStarted = () => {
+    const handleFirstQuestion = (data) => {
+      if (hasNavigated) return;
+      setHasNavigated(true);
       navigate(`/game/${gamePin}`, {
-        state: { isHost, game, playerId: state?.playerId },
+        state: { isHost, game, playerId: state?.playerId, initialQuestion: data },
       });
     };
 
     socket.on("game:update-players", handleUpdatePlayers);
-    socket.on("game:started", handleGameStarted);
+    socket.on("game:new-question", handleFirstQuestion);
 
     return () => {
       socket.off("game:update-players", handleUpdatePlayers);
-      socket.off("game:started", handleGameStarted);
+      socket.off("game:new-question", handleFirstQuestion);
     };
-  }, [socket, navigate, gamePin, state, isHost]);
+  }, [socket, navigate, gamePin, state, isHost, hasNavigated]);
 
   const handleStartGame = () => {
     socket.emit("host:start-game", { pin: gamePin });
