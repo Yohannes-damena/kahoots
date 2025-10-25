@@ -7,7 +7,6 @@ import Background from "./components/Background";
 import { AnimatePresence } from "framer-motion";
 
 import CreateQuiz from "./pages/createQuiz";
-// import QuestionPage from "./pages/questionPage";
 // Test Pages(only imported in development);/
 import TestPage from "./pages/TestPage";
 import TestQuestionPage from "./pages/test/TestQuestion";
