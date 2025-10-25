@@ -40,7 +40,8 @@ export const socketHandlers = (io, socket) => {
       games[pin] = {
         pin,
         hostId,
-        players: [{ id: hostId, name, score: 0, isHost: true }],
+        hostName: name,
+        players: [], // empty — real players join later
         questions: selectedQuestions,
         currentQuestionIndex: -1,
         gameState: "lobby",
@@ -48,6 +49,7 @@ export const socketHandlers = (io, socket) => {
         quizId: quiz._id,
       };
 
+      // Create Game
       socket.join(pin);
       socket.emit("host:game-created", { game: games[pin] });
     } catch (err) {
@@ -55,9 +57,7 @@ export const socketHandlers = (io, socket) => {
       socket.emit("host:create-error", { message: "Failed to create game." });
     }
   });
-
-
-
+  // Join Game
   socket.on("player:join-game", ({ name, pin }) => {
     const game = games[pin];
     if (!game)
@@ -97,10 +97,15 @@ export const socketHandlers = (io, socket) => {
     const isCorrect = question.correctAnswerIndex === answerIndex;
 
     // Calculate time-based score: faster answers earn more within the time limit
-    const elapsedMs = Math.max(0, Date.now() - (game.questionStartTime || Date.now()));
+    const elapsedMs = Math.max(
+      0,
+      Date.now() - (game.questionStartTime || Date.now())
+    );
     const timeFactor = Math.max(0, 1 - elapsedMs / 15000); // 0..1
     const basePoints = question.points ?? 100;
-    const earned = isCorrect ? Math.round(basePoints * (0.5 + 0.5 * timeFactor)) : 0; // 50%-100% of base
+    const earned = isCorrect
+      ? Math.round(basePoints * (0.5 + 0.5 * timeFactor))
+      : 0; // 50%-100% of base
 
     game.answers.push({ playerId, answerIndex, isCorrect, elapsedMs, earned });
     if (isCorrect) player.score += earned;
@@ -117,28 +122,40 @@ export const socketHandlers = (io, socket) => {
       showAnswerAndLeaderboard(io, pin);
     }
   });
-
   socket.on("host:next-question", ({ pin }) => {
     const game = games[pin];
-    if (game && game.hostId === socket.id) {
-      if (game.currentQuestionIndex >= game.questions.length - 1) {
-        game.gameState = "end";
-        const finalScores = [...game.players].sort((a, b) => b.score - a.score);
+    if (!game || game.hostId !== socket.id) return;
 
-        // Persist results (best-effort, non-blocking)
-        const doc = new GameResult({
-          pin,
-          quizId: game.quizId,
-          hostName: game.players.find(p => p.isHost)?.name || "Host",
-          players: finalScores.map(({ name, score }) => ({ name, score })),
-          questionsCount: game.questions.length,
-        });
-        doc.save().catch(() => {});
+    const isLastQuestion =
+      game.currentQuestionIndex >= game.questions.length - 1;
 
-        io.to(pin).emit("game:ended", { finalScores });
-      } else {
-        sendQuestion(io, pin);
-      }
+    if (isLastQuestion) {
+      game.gameState = "end";
+
+      // ✅ Filter out the host from scores
+      const finalScores = game.players
+        .filter((p) => !p.isHost)
+        .sort((a, b) => b.score - a.score);
+
+      // ✅ Persist results (without host)
+      const doc = new GameResult({
+        pin,
+        quizId: game.quizId,
+        hostName: game.players.find((p) => p.isHost)?.name || "Host",
+        players: finalScores.map(({ name, score }) => ({ name, score })),
+        questionsCount: game.questions.length,
+      });
+
+      doc
+        .save()
+        .catch((err) =>
+          console.warn("Failed to save game result:", err.message)
+        );
+
+      // ✅ Emit final leaderboard (players only)
+      io.to(pin).emit("game:ended", { finalScores });
+    } else {
+      sendQuestion(io, pin);
     }
   });
 

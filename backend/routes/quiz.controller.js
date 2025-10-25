@@ -30,32 +30,7 @@ export const createQuiz = async (req, res) => {
     res.status(500).json({ error: "Failed to create quiz" });
   }
 };
-// Called each time the host submits a new question.
-// export const addQuestion = async (req, res) => {
-//   try {
-//     const { quizId } = req.params;
-//     const { text, options, correctAnswerIndex } = req.body;
 
-//     const question = {
-//       text,
-//       options: options.map((opt, i) => ({
-//         text: opt,
-//         isCorrect: i === correctAnswerIndex,
-//       })),
-//     };
-
-//     const updatedQuiz = await Quiz.findByIdAndUpdate(
-//       quizId,
-//       { $push: { questions: question } },
-//       { new: true }
-//     );
-
-//     res.json(updatedQuiz);
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({ error: "Failed to add question" });
-//   }
-// };
 export const getQuizByCode = async (req, res) => {
   try {
     const { code } = req.params;
